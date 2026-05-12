@@ -18,7 +18,7 @@
 - Canvas画布：用于自定义绘制图形。
 
 ### 工程目录
-
+```
 ├──entry/src/main/ets	                 // 代码区
 │  ├──common
 │  │  ├──constants
@@ -70,7 +70,7 @@
 │     └──pages              
 │        └──ZonesCard.ets                // 区域卡片类
 └──entry/src/main/resources	             // 资源文件目录
-
+```
 ### 相关权限
 
 不涉及
