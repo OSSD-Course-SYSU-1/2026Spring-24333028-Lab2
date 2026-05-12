@@ -1,0 +1,13 @@
+# IDE
+.idea/
+.hvigor/
+
+# 构建产物
+entry/build/
+**/build/
+
+# 本地配置
+*.cache
+*.log
+*.iml
+oh-package-lock.json
