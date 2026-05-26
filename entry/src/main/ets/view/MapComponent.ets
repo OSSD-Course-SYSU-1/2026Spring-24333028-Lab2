@@ -24,6 +24,7 @@ import { PositionList } from '../viewmodel/MapModel';
 @Component
 export struct Map {
   private panOption: PanGestureOptions = new PanGestureOptions({ direction: PanDirection.All });
+  @StorageLink("routeFocusType") routeFocusType: number = 0;
   @State screenMapWidth: number = 0;
   @State screenMapHeight: number = 0;
   @State mapWidth: number = 0;
@@ -64,6 +65,9 @@ export struct Map {
       .width(Const.FULL_PERCENT)
       .justifyContent(FlexAlign.Start)
       .alignItems(HorizontalAlign.Start)
+      .onAppear(() => {
+        this.focusRouteTarget();
+      })
       .onAreaChange((oldVal: Area, newVal: Area) => {
         if (this.screenMapWidth === 0 || this.screenMapHeight === 0) {
           this.screenMapWidth = Number(newVal.width);
@@ -72,6 +76,7 @@ export struct Map {
           this.mapWidth = Const.MAP_WIDTH * this.mapHeight / Const.MAP_HEIGHT;
           this.mapX = (this.screenMapWidth - this.mapWidth) / Const.DOUBLE_OR_HALF;
           MapController.initLeftTop(this.screenMapWidth, this.mapWidth);
+          this.focusRouteTarget();
         }
       })
       .gesture(
@@ -181,6 +186,25 @@ export struct Map {
     if ((this.mapY + this.mapHeight) < (this.mapHeight / MapController.mapMultiples())) {
       this.mapY = this.mapHeight / MapController.mapMultiples() - this.mapHeight;
     }
+  }
+
+  focusRouteTarget(): void {
+    if (this.routeFocusType <= 0 || this.mapWidth <= 0 || this.mapHeight <= 0) {
+      return;
+    }
+    const targets: PositionItem[] = PositionList.filter((item: PositionItem) => item.type === this.routeFocusType);
+    if (targets.length === 0) {
+      return;
+    }
+    const target: PositionItem = targets[0];
+    this.data = MapModel.calCoordinateByLonAndLat(target.lngLat, target.type, this.mapWidth, this.mapHeight);
+    MapController.calLandmarksPosition(this.data);
+    if (this.data.locations.length > 0) {
+      this.mapX = this.screenMapWidth / Const.DOUBLE_OR_HALF - this.data.locations[0].positionX;
+      this.mapY = this.screenMapHeight / Const.DOUBLE_OR_HALF - this.data.locations[0].positionY;
+      this.zoomOutCheck();
+    }
+    this.routeFocusType = 0;
   }
 }
 

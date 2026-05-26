@@ -21,6 +21,7 @@ import BuildListItem from '../view/BuildListItem';
 import StyleListItem from '../view/StyleListItem';
 import SwiperListItem from '../view/SwiperListItem';
 import SubTitleItem from '../view/SubTitleItem';
+import { ExploreModel } from '../viewmodel/ExploreModel';
 import zonesViewModel from '../viewmodel/ZonesViewModel';
 
 interface TitleIconInterface {
@@ -39,6 +40,7 @@ struct IntroductionPage {
   @StorageLink("imageHeight") imageHeight: number = Const.FULL_PERCENT_NUMBER;
   @StorageLink("arrowIconOpacity") arrowIconOpacity: number = Const.OPACITY_MAX;
   @StorageLink("currentZoneId") currentZoneId: number = 0;
+  @StorageLink("visitedZoneIds") visitedZoneIds: number[] = [];
   @StorageLink("offsetSum") offsetSum: number = 0;
   @StorageLink('isContinuation') isContinuation: string = Const.NO_CONTINUATION;
   @StorageLink('cardID') cardID: number = -1;
@@ -54,6 +56,7 @@ struct IntroductionPage {
   @State screenDensityDPI: number = 0;
   @State geographicPicType: string = Const.GEOGRAPHY_LIGHT;
   @State buildingType: string = Const.BUILDING_TEXT;
+  @State isZoneVisited: boolean = false;
 
   @Builder
   TitleIcon($$: TitleIconInterface) {
@@ -111,6 +114,44 @@ struct IntroductionPage {
       .height($r('app.float.introduction_page_padding_bottom'))
   }
 
+  @Builder
+  ExploreCard() {
+    Row() {
+      Column() {
+        Text('校园探索打卡')
+          .fontSize(18)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#182431')
+        Text(this.isZoneVisited ? '这个区域已完成打卡。' : '游览结束后，可以在这里完成区域打卡。')
+          .fontSize(13)
+          .fontColor('#66000000')
+          .margin({ top: 4 })
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
+      Button(this.isZoneVisited ? '已打卡' : '打卡')
+        .enabled(!this.isZoneVisited)
+        .fontSize(14)
+        .fontColor(Color.White)
+        .backgroundColor(this.isZoneVisited ? '#8A8F99' : '#0A59F7')
+        .onClick(() => {
+          this.visitedZoneIds = ExploreModel.markVisited(this.currentZoneId);
+          this.isZoneVisited = true;
+        })
+    }
+    .width('92%')
+    .padding(14)
+    .margin({ top: 12, bottom: 12, left: '4%', right: '4%' })
+    .backgroundColor(Color.White)
+    .borderRadius(8)
+    .shadow({
+      radius: 12,
+      color: '#14000000',
+      offsetY: 4
+    })
+  }
+
   /**
    * The transition animation from page to page.
    */
@@ -150,6 +191,10 @@ struct IntroductionPage {
 
             ListItem() {
               SubTitleItem()
+            }
+
+            ListItem() {
+              this.ExploreCard()
             }
 
             ListItemGroup({ header: this.StickyHeader(), footer: this.StickyFooter() }) {
@@ -224,6 +269,7 @@ struct IntroductionPage {
   aboutToAppear() {
     this.initializeZoneId();
     this.getIntroductionData();
+    this.isZoneVisited = ExploreModel.isVisited(this.currentZoneId);
     this.getLazySwiperData();
     this.screenHeight = DeviceScreen.getDeviceHeight();
   }

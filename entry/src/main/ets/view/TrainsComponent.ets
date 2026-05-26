@@ -20,7 +20,9 @@ import TrainsTrack from './TrainsTrack';
 
 @Component
 export struct Trains {
+  private timerId: number = -1;
   @State trainsMapData: TrainsMap[] = PositionList;
+  @State timeTick: number = 0;
   @StorageLink("showLineOne") showLineOne: boolean = false;
   @StorageLink("showLineTwo") showLineTwo: boolean = false;
   @StorageLink("showLineThree") showLineThree: boolean = false;
@@ -71,6 +73,78 @@ export struct Trains {
     const date = new Date();
     const weekday = date.getDay();
     return weekday === 0 || weekday === 6;
+  }
+
+  aboutToAppear() {
+    if (this.timerId !== -1) {
+      return;
+    }
+    this.timerId = setInterval(() => {
+      this.timeTick++;
+    }, 30000);
+  }
+
+  aboutToDisappear() {
+    if (this.timerId !== -1) {
+      clearInterval(this.timerId);
+      this.timerId = -1;
+    }
+  }
+
+  getStartTime(line: number): string {
+    if (line === TrainsLine.LINE_THREE && this.checkWeekend()) {
+      return Const.LINE_THREE_WEEKEND_START_TIME;
+    }
+    switch (line) {
+      case TrainsLine.LINE_ONE:
+        return Const.LINE_ONE_START_TIME;
+      case TrainsLine.LINE_TWO:
+        return Const.LINE_TWO_START_TIME;
+      case TrainsLine.LINE_THREE:
+        return Const.LINE_THREE_START_TIME;
+      default:
+        return Const.LINE_ONE_START_TIME;
+    }
+  }
+
+  getEndTime(line: number): string {
+    if (line === TrainsLine.LINE_THREE && this.checkWeekend()) {
+      return Const.LINE_THREE_WEEKEND_END_TIME;
+    }
+    switch (line) {
+      case TrainsLine.LINE_ONE:
+        return Const.LINE_ONE_END_TIME;
+      case TrainsLine.LINE_TWO:
+        return Const.LINE_TWO_END_TIME;
+      case TrainsLine.LINE_THREE:
+        return Const.LINE_THREE_END_TIME;
+      default:
+        return Const.LINE_ONE_END_TIME;
+    }
+  }
+
+  getNextTrainText(line: number, interval: number): string {
+    this.timeTick;
+    if (line === TrainsLine.LINE_TWO && this.checkWeekend()) {
+      return 'Weekend closed';
+    }
+    const date = new Date();
+    const dateStr = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} `;
+    const startDate = new Date(dateStr + this.getStartTime(line)).getTime();
+    const endDate = new Date(dateStr + this.getEndTime(line)).getTime();
+    const currentDate = date.getTime();
+    if (currentDate < startDate) {
+      return `${Math.ceil((startDate - currentDate) / 60000)} min to first train`;
+    }
+    if (currentDate > endDate) {
+      return 'Service ended today';
+    }
+    const passedMinutes = Math.floor((currentDate - startDate) / 60000);
+    const waitMinutes = interval - passedMinutes % interval;
+    if (waitMinutes === interval) {
+      return 'Arriving soon';
+    }
+    return `${waitMinutes} min to next train`;
   }
 
   changeShowMap(line: number) {
@@ -140,6 +214,12 @@ export struct Trains {
                   this.changeShowMap(index);
                   this.trainsMapData = this.trainsMapData.slice(0);
                 })
+
+                Text(this.getNextTrainText(index, item.interval))
+                  .fontSize(14)
+                  .fontColor(this.isOperating(index) ? '#0A59F7' : '#99000000')
+                  .fontWeight(FontWeight.Medium)
+                  .width(Const.FULL_SIZE)
 
                 if (this.fetchShowMap(index) && this.isOperating(index)) {
                   TrainsTrack({ trainsInfo: this.trainsMapData[index], trainLine: index })
