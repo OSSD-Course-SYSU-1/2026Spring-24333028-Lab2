@@ -22,6 +22,7 @@ export class ExploreModel {
       ids.push(id);
     }
     AppStorage.setOrCreate<number[]>(ExploreModel.STORAGE_KEY, ids);
+    AppStorage.set<number[]>(ExploreModel.STORAGE_KEY, ids);
     return ids;
   }
 

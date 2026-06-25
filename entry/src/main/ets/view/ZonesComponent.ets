@@ -27,6 +27,9 @@ export struct Zones {
   @StorageLink("aheadIndex") aheadIndex: number = ZoneConst.HALF_COUNT;
   @StorageLink("bottomTabIndex") bottomTabIndex: number = 1;
   @StorageLink("routeFocusType") routeFocusType: number = 0;
+  @StorageLink("routeFocusLongitude") routeFocusLongitude: number = 0;
+  @StorageLink("routeFocusLatitude") routeFocusLatitude: number = 0;
+  @StorageLink("routeFocusToken") routeFocusToken: number = 0;
   @StorageLink("visitedZoneIds") visitedZoneIds: number[] = [];
   @State selectedRouteIndex: number = 0;
   @State marginBottom: number = 0;
@@ -83,6 +86,10 @@ export struct Zones {
     }
   }
 
+  aboutToAppear() {
+    this.visitedZoneIds = ExploreModel.getVisitedIds();
+  }
+
   @Builder
   ExploreSummary() {
     Column() {
@@ -110,7 +117,7 @@ export struct Zones {
         .backgroundColor('#E5EAF0')
         .margin({ top: 8 })
 
-      Text('已探索 ' + ExploreModel.progressLabel(this.zonesList.length) + ' 个区域')
+      Text(`已探索 ${this.visitedZoneIds.length}/${this.zonesList.length} 个区域`)
         .fontSize(12)
         .fontColor('#66000000')
         .margin({ top: 6 })
@@ -171,7 +178,11 @@ export struct Zones {
         .backgroundColor(RoutePlanner.getPlan(this.selectedRouteIndex).accentColor)
         .margin({ top: 10 })
         .onClick(() => {
-          this.routeFocusType = RoutePlanner.getPlan(this.selectedRouteIndex).poiType;
+          const plan: RoutePlan = RoutePlanner.getPlan(this.selectedRouteIndex);
+          this.routeFocusType = plan.poiType;
+          this.routeFocusLongitude = plan.firstStopLongitude;
+          this.routeFocusLatitude = plan.firstStopLatitude;
+          this.routeFocusToken++;
           this.bottomTabIndex = 0;
         })
     }

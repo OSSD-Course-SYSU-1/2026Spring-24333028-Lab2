@@ -49,6 +49,16 @@ export class MapModel {
     return this.data;
   }
 
+  calTemporaryCoordinateByLonAndLat(geoCoordinates: Array<GeoCoordinates>, type: number,
+                                    mapWidth: number, mapHeight: number): AddressItem {
+    let addressItem = new AddressItem();
+    addressItem.name = mapLandmarksName[type - 1];
+    addressItem.icon = mapLandmarksIcon[type - 1];
+    addressItem.locations = this.initLocationData(geoCoordinates, mapWidth, mapHeight);
+    addressItem.textColor = mapLandmarksTextColor[type - 1];
+    return addressItem;
+  }
+
   /**
    * Initialize the coordinates of landmarks on the map.
    *

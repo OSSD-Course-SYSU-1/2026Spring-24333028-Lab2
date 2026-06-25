@@ -14,7 +14,7 @@
  */
 
 import { AddressItem, Location } from '../viewmodel/AddressItem';
-import { PositionItem } from '../viewmodel/PositionItem';
+import { GeoCoordinates, PositionItem } from '../viewmodel/PositionItem';
 import { CommonConstants as Const } from '../common/constants/CommonConstants';
 import Logger from '../common/utils/Logger';
 import MapController from '../controller/MapController';
@@ -25,6 +25,11 @@ import { PositionList } from '../viewmodel/MapModel';
 export struct Map {
   private panOption: PanGestureOptions = new PanGestureOptions({ direction: PanDirection.All });
   @StorageLink("routeFocusType") routeFocusType: number = 0;
+  @StorageLink("routeFocusLongitude") routeFocusLongitude: number = 0;
+  @StorageLink("routeFocusLatitude") routeFocusLatitude: number = 0;
+  @StorageLink("routeFocusToken")
+  @Watch('handleRouteFocusChanged')
+  routeFocusToken: number = 0;
   @State screenMapWidth: number = 0;
   @State screenMapHeight: number = 0;
   @State mapWidth: number = 0;
@@ -192,12 +197,19 @@ export struct Map {
     if (this.routeFocusType <= 0 || this.mapWidth <= 0 || this.mapHeight <= 0) {
       return;
     }
-    const targets: PositionItem[] = PositionList.filter((item: PositionItem) => item.type === this.routeFocusType);
-    if (targets.length === 0) {
-      return;
+    let lngLat: Array<GeoCoordinates> = [];
+    let focusCoordinate: GeoCoordinates = new GeoCoordinates();
+    focusCoordinate.longitude = this.routeFocusLongitude;
+    focusCoordinate.latitude = this.routeFocusLatitude;
+    lngLat.push(focusCoordinate);
+    if (this.routeFocusLongitude === 0 || this.routeFocusLatitude === 0) {
+      const targets: PositionItem[] = PositionList.filter((item: PositionItem) => item.type === this.routeFocusType);
+      if (targets.length === 0) {
+        return;
+      }
+      lngLat = targets[0].lngLat;
     }
-    const target: PositionItem = targets[0];
-    this.data = MapModel.calCoordinateByLonAndLat(target.lngLat, target.type, this.mapWidth, this.mapHeight);
+    this.data = MapModel.calTemporaryCoordinateByLonAndLat(lngLat, this.routeFocusType, this.mapWidth, this.mapHeight);
     MapController.calLandmarksPosition(this.data);
     if (this.data.locations.length > 0) {
       this.mapX = this.screenMapWidth / Const.DOUBLE_OR_HALF - this.data.locations[0].positionX;
@@ -205,6 +217,12 @@ export struct Map {
       this.zoomOutCheck();
     }
     this.routeFocusType = 0;
+    this.routeFocusLongitude = 0;
+    this.routeFocusLatitude = 0;
+  }
+
+  handleRouteFocusChanged(): void {
+    this.focusRouteTarget();
   }
 }
 
